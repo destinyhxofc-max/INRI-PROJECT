@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Reseller{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
+{% block body_class %}console{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="">
+      <div>DESTINY <span>H4X</span></div>
+    </div>
+    <div class="sub">RESELLER ACCESS</div>
+    {% if maintenance and maintenance.on %}
+    <div class="maint-banner mb-12">DESTINY H4X ON MAINTENANCE &middot; TIMERS PAUSED</div>
+    {% endif %}
+    {% if disabled %}<div class="notice bad mb-12">This reseller account is disabled.</div>{% endif %}
+    {% if error %}<div class="notice bad mb-12">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('reseller.login_post') }}" autocomplete="off">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="res-user">Username</label>
+        <input id="res-user" name="username" type="text" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="res-pass">Password</label>
+        <input id="res-pass" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button class="btn" type="submit">LOG IN</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

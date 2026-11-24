@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Verify{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/activation.css') }}">{% endblock %}
+{% block body_class %}page-verify{% endblock %}
+{% block body %}
+<canvas id="bgCanvas"></canvas>
+<main class="verify">
+  <div class="brand">DESTINY <span>H4X</span></div>
+  <div class="divider"></div>
+  <div class="verify-status" id="verifyStatus">Verifying location</div>
+  <div class="spinner" id="verifySpinner"></div>
+
+  <div class="lock-box hidden" id="lockBox">
+    <h1 id="lockTitle">STATE LOCKED</h1>
+    <p>Access is not available from your location.</p>
+    <div class="lock-meta" id="lockMeta"></div>
+  </div>
+
+  <div class="verify-wrap hidden" id="retryWrap">
+    <button class="btn ghost" id="retryBtn" type="button">RETRY</button>
+  </div>
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/verify.js') }}"></script>{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Admin{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
+{% block body_class %}console{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="">
+      <div>DESTINY <span>H4X</span></div>
+    </div>
+    <div class="sub">ADMIN CONSOLE</div>
+    {% if error %}<div class="notice bad mb-12">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('admin.login_post') }}" autocomplete="off">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="admin-user">Username</label>
+        <input id="admin-user" name="username" type="text" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="admin-pass">Password</label>
+        <input id="admin-pass" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button class="btn" type="submit">LOG IN</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

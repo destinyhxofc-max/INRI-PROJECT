@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Premium Access{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/activation.css') }}">{% endblock %}
+{% block body_class %}page-activate{% endblock %}
+{% block body %}
+<canvas id="bgCanvas"></canvas>
+<main class="panel">
+  <img class="avatar" alt="Destiny H4X" src="{{ url_for('static', filename='img/avatar.jpg') }}">
+  <div class="brand">DESTINY <span>H4X</span></div>
+  <div class="divider"></div>
+  <div class="tag">PREMIUM ACCESS PANEL</div>
+
+  <form id="gate-form" class="card" novalidate>
+    <div class="row">
+      <span class="label">ACCESS KEY</span>
+      <span class="badge">&#9679; SECURED</span>
+    </div>
+    <div class="input-wrap">
+      <input id="license-key" type="text" placeholder="DYH4X-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64">
+      <button id="paste" type="button">PASTE</button>
+    </div>
+    <button id="unlock" class="btn" type="submit">UNLOCK</button>
+    <div id="gate-msg" class="msg{% if notice %} err{% endif %}">{{ notice }}</div>
+  </form>
+
+  <div class="foot">Each key is bound to its own device.</div>
+  {% if buy_url %}
+  <div class="links"><a id="need-key" href="{{ buy_url }}" target="_blank" rel="noopener noreferrer">Need a key?</a></div>
+  {% endif %}
+</main>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/activation.js') }}"></script>{% endblock %}

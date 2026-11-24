@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Maintenance{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/activation.css') }}">{% endblock %}
+{% block body_class %}page-maint{% endblock %}
+{% block body %}
+<canvas id="bgCanvas"></canvas>
+<main class="maint">
+  <div class="maint-brand">DESTINY <span>H4X</span></div>
+  <div class="divider"></div>
+  <div class="maint-title">On maintenance</div>
+  <div class="maint-sub">COME BACK LATER</div>
+</main>
+{% endblock %}

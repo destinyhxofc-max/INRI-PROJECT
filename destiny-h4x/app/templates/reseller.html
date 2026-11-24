@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Reseller{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
+{% block body_class %}console{% endblock %}
+{% block body %}
+<div id="resellerRoot" data-maint="{{ 1 if maintenance.on else 0 }}" data-welcome="{{ 1 if welcome else 0 }}"
+     data-name="{{ reseller.first_name }} {{ reseller.last_name }}">
+<div class="topbar">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="">
+    <div>DESTINY <span>H4X</span></div>
+  </div>
+  <div class="who">
+    <span>Reseller</span>
+    <span class="code">{{ reseller.username }}</span>
+    <form method="post" action="{{ url_for('reseller.logout') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn ghost small" type="submit">LOG OUT</button>
+    </form>
+  </div>
+</div>
+
+<main class="main narrow">
+  {% if maintenance.on %}
+  <div class="maint-banner">DESTINY H4X ON MAINTENANCE &middot; COME BACK LATER &middot; ALL TIMERS PAUSED</div>
+  {% endif %}
+
+  <div class="panel">
+    <div class="reseller-hero">
+      {% if photo_url %}
+      <img src="{{ photo_url }}" alt="{{ reseller.first_name }}">
+      {% else %}
+      <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="">
+      {% endif %}
+      <div class="hello">
+        <h1>Welcome, {{ reseller.first_name }} {{ reseller.last_name }}</h1>
+        <div class="balance">Balance<strong id="rsBalance">{{ reseller.balance_cents|money }}</strong></div>
+      </div>
+      <div class="inline-note">Joined <span data-ts="{{ reseller.created_at }}"></span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Plans</h2>
+    <p class="hint">Buy a key with your balance. When a plan is sold out, send a restock request to the admin.</p>
+    <div class="plan-grid" id="planGrid">
+      {% for plan in plans %}
+      <div class="plan{% if plan.stock <= 0 %} sold-out{% endif %}" data-plan="{{ plan.id }}">
+        <h4>{{ plan.name }}</h4>
+        <div class="meta"><span>{{ plan.seconds|duration }}</span><span class="price">{{ plan.price_cents|money }}</span></div>
+        <div class="meta"><span>Stock: {{ plan.stock }}</span><span>Sold: {{ plan.sold }}</span></div>
+        <div class="actions">
+          {% if plan.stock > 0 %}
+          <button class="btn small" data-buy="{{ plan.id }}" type="button">BUY</button>
+          <button class="btn small ghost" data-restock="{{ plan.id }}" type="button">RESTOCK</button>
+          {% else %}
+          <button class="btn small ghost" data-restock="{{ plan.id }}" type="button">REQUEST RESTOCK</button>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="empty">No plans available yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>My keys</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Key</th><th>Plan</th><th>Type</th><th>State</th><th>Time left</th></tr></thead>
+        <tbody>
+          {% for key in keys %}
+          <tr>
+            <td class="code">{{ key.code }}</td>
+            <td>{{ key.plan_name or '—' }}</td>
+            <td>{{ 'Single' if key.kind == 'single' else 'Unlimited' }}</td>
+            <td><span class="tag {{ 'ok' if key.state == 'active' else ('bad' if key.state == 'revoked' else 'dim') }}">{{ key.state|upper }}</span></td>
+            <td>
+              <span class="js-left" data-state="{{ key.state }}" data-remaining="{{ key.remaining if key.remaining is not none else 0 }}"
+                    data-expires="{{ key.expires_at or 0 }}">{{ key.remaining_label }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="empty">No keys yet. Buy a plan above.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Restock requests</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Plan</th><th>Status</th><th>Sent</th></tr></thead>
+        <tbody>
+          {% for item in requests %}
+          <tr>
+            <td>{{ item.plan_name }}</td>
+            <td><span class="tag {{ 'warn' if item.status == 'open' else 'dim' }}">{{ item.status|upper }}</span></td>
+            <td><span data-ts="{{ item.created_at }}"></span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="empty">No requests.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Purchases</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Plan</th><th>Key</th><th>Price</th><th>Time</th></tr></thead>
+        <tbody>
+          {% for item in purchases %}
+          <tr>
+            <td>{{ item.plan_name or 'Deleted plan' }}</td>
+            <td class="code">{{ item.code or '—' }}</td>
+            <td>{{ item.unit_price_cents|money }}</td>
+            <td><span data-ts="{{ item.created_at }}"></span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="empty">No purchases yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+</div>
+<div class="toast" id="toast"></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/reseller.js') }}"></script>{% endblock %}

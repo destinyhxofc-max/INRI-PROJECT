@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Blocked{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/activation.css') }}">{% endblock %}
+{% block body_class %}page-banned{% endblock %}
+{% block body %}
+<main class="banned">
+  <div class="brand">DESTINY <span>H4X</span></div>
+  <div class="divider"></div>
+  <h1>ACCESS DENIED</h1>
+  <p>This IP address has been blocked.</p>
+  {% if ban and ban.reason %}<p class="small">Reason: {{ ban.reason }}</p>{% endif %}
+  <p class="small">IP: {{ ip }}</p>
+</main>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Access{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/activation.css') }}">{% endblock %}
+{% block body_class %}page-dash{% endblock %}
+{% block body %}
+<canvas id="bgCanvas"></canvas>
+<section class="dash" id="dashRoot"
+  data-device="{{ device }}"
+  data-kind="{{ key.kind }}"
+  data-remaining="{{ remaining if remaining is not none else 0 }}"
+  data-expires="{{ expires_at or 0 }}"
+  data-maintenance="{{ 1 if maintenance.on else 0 }}">
+  <div class="dash-top">
+    <div class="dash-brand">
+      <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="">
+      <div>DESTINY <span>H4X</span></div>
+    </div>
+    <div class="dash-top-actions">
+      <span class="pill off" id="routePill">&#9679; ROUTE OFFLINE</span>
+      <button id="dashOut" class="dash-logout" type="button">Log out</button>
+    </div>
+  </div>
+
+  <div class="dash-title">
+    <small>SECURE ACCESS</small>
+    <h2>DESTINY H4X ACTIVATED</h2>
+  </div>
+  <div class="dash-sub">Connect, then open your private route.</div>
+
+  {% if maintenance.on %}
+  <div class="maint-banner">
+    <strong>DESTINY H4X ON MAINTENANCE</strong>
+    <span>COME BACK LATER &middot; TIMER PAUSED</span>
+  </div>
+  {% endif %}
+
+  <div class="dev">
+    <div class="dev-head">
+      <div>
+        <div class="label">THIS DEVICE</div>
+        <h3>Connection</h3>
+      </div>
+      <span class="pill off" id="dashStatus">&#9679; OFFLINE</span>
+    </div>
+
+    <div class="dev-id">
+      <div>
+        <div class="label dev-id-label">DEVICE ID</div>
+        <code id="dashDev">{{ device }}</code>
+      </div>
+      <button id="dashCopy" class="copy" type="button">Copy</button>
+    </div>
+
+    <div class="timer-row">
+      <span class="label">TIME LEFT</span>
+      <span class="timer-value" id="timeLeft">--:--</span>
+    </div>
+    <div class="expiry-line" id="expiryLine"></div>
+
+    <button id="dashConnect" class="connect" type="button" {% if maintenance.on %}disabled{% endif %}>&#9889; Connect to Happ</button>
+    <div id="dashNote" class="dev-note">{% if maintenance.on %}Maintenance is on. Timer is paused.{% endif %}</div>
+
+    <div class="link-box" id="linkBox">
+      <label>SUBSCRIPTION LINK</label>
+      <input id="subLink" type="text" readonly>
+      <div class="row">
+        <button class="btn ghost" id="copySub" type="button">COPY LINK</button>
+        <button class="btn ghost" id="hideSub" type="button">HIDE</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-foot">
+    <span>DESTINY H4X &middot; ACCESS</span>
+    {% if support_url %}<a href="{{ support_url }}" target="_blank" rel="noopener noreferrer">Support</a>{% else %}<span>{{ key.kind|capitalize }} device</span>{% endif %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}

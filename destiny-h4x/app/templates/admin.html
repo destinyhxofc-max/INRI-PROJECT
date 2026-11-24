@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+{% block title %}{{ app_name }} • Admin{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endblock %}
+{% block body_class %}console{% endblock %}
+{% block body %}
+<div class="topbar">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='img/avatar.jpg') }}" alt="">
+    <div>DESTINY <span>H4X</span></div>
+  </div>
+  <div class="who">
+    <span id="who-admin">admin</span>
+    <span id="who-ip"></span>
+    <button class="btn ghost small" id="admin-logout" type="button">LOG OUT</button>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="nav" id="admin-nav">
+    <button data-tab="overview" class="active" type="button">Overview</button>
+    <button data-tab="keys" type="button">Keys</button>
+    <button data-tab="plans" type="button">Plans</button>
+    <button data-tab="resellers" type="button">Resellers</button>
+    <button data-tab="requests" type="button">Restock Requests</button>
+    <button data-tab="bans" type="button">IP Bans</button>
+    <button data-tab="geo" type="button">Country Lock</button>
+    <button data-tab="config" type="button">Happ Config</button>
+    <button data-tab="sessions" type="button">Sessions</button>
+    <button data-tab="audit" type="button">Audit Log</button>
+  </nav>
+
+  <main class="main">
+    <section class="section active" id="sec-overview">
+      <div class="panel">
+        <h2>Overview</h2>
+        <p class="hint">Live state of DESTINY H4X.</p>
+        <div class="grid stats">
+          <div class="stat"><small>Active keys</small><strong id="st-keys-active">0</strong></div>
+          <div class="stat"><small>Unused keys</small><strong id="st-keys-unused">0</strong></div>
+          <div class="stat"><small>Total keys</small><strong id="st-keys-total">0</strong></div>
+          <div class="stat"><small>Resellers</small><strong id="st-resellers">0</strong></div>
+          <div class="stat"><small>Open requests</small><strong id="st-requests">0</strong></div>
+          <div class="stat"><small>Banned IPs</small><strong id="st-bans">0</strong></div>
+          <div class="stat"><small>Live sessions</small><strong id="st-sessions">0</strong></div>
+          <div class="stat"><small>Revenue</small><strong id="st-revenue">0</strong></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Maintenance</h2>
+        <p class="hint">All key timers pause while maintenance is on. Subscriptions show the maintenance notice in Happ.</p>
+        <div class="maint-state">
+          <span class="tag" id="maint-state">OFF</span>
+          <button class="btn" id="maint-toggle" type="button">TURN ON</button>
+          <span class="inline-note" id="maint-note"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>System</h2>
+        <p class="hint">Public address used for subscription links: <span class="code" id="ov-base"></span></p>
+        <div id="ov-config"></div>
+        <h3 class="mt-14">Recent activity</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Detail</th><th>IP</th></tr></thead>
+            <tbody id="ov-audit"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-keys">
+      <div class="panel">
+        <h2>Generate keys</h2>
+        <p class="hint">Single keys bind to the first device / Happ HWID. Unlimited keys work on any device.</p>
+        <form id="key-form">
+          <div class="form-grid">
+            <div class="field"><label>Validity</label><input name="value" type="number" min="1" value="30" required></div>
+            <div class="field"><label>Unit</label>
+              <select name="unit">
+                <option value="seconds">Seconds</option>
+                <option value="minutes" selected>Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+            <div class="field"><label>Device limit</label>
+              <select name="kind">
+                <option value="single" selected>Single device</option>
+                <option value="unlimited">Unlimited devices</option>
+              </select>
+            </div>
+            <div class="field"><label>How many</label><input name="count" type="number" min="1" max="500" value="1"></div>
+            <div class="field"><label>Plan (optional)</label><select name="plan_id" id="key-plan"><option value="">None</option></select></div>
+            <div class="field"><label>Note</label><input name="note" type="text" maxlength="200" placeholder="batch, customer, etc."></div>
+          </div>
+          <div class="actions">
+            <button class="btn" type="submit">GENERATE</button>
+            <button class="btn ghost" id="test-key" type="button">TEST KEY (10 MIN)</button>
+            <button class="btn ghost" id="test-config" type="button">TEST CONFIG</button>
+            <a class="btn ghost" href="{{ url_for('admin.keys_export') }}">EXPORT TXT</a>
+          </div>
+          <div class="msg-line" id="key-msg"></div>
+          <div class="out-box" id="key-out-wrap">
+            <textarea id="key-out" readonly></textarea>
+            <div class="actions"><button class="btn small" id="key-copy" type="button">COPY</button></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Keys</h2>
+        <div class="form-grid">
+          <div class="field wide"><label>Search</label><input id="key-search" type="search" placeholder="Code, plan or reseller"></div>
+          <div class="field"><label>&nbsp;</label><button class="btn ghost wide-btn" id="key-refresh" type="button">REFRESH</button></div>
+        </div>
+        <div class="table-wrap mt-12">
+          <table>
+            <thead><tr><th>Code</th><th>Type</th><th>State</th><th>Time left</th><th>Plan</th><th>Reseller</th><th>Devices</th><th>Actions</th></tr></thead>
+            <tbody id="keys-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-plans">
+      <div class="panel">
+        <h2>Create plan</h2>
+        <p class="hint">Plans are sold to resellers. When stock reaches zero nobody can buy until you restock.</p>
+        <form id="plan-form">
+          <div class="form-grid">
+            <div class="field wide"><label>Plan name</label><input name="name" type="text" maxlength="60" placeholder="2 Minute Test" required></div>
+            <div class="field"><label>Validity</label><input name="value" type="number" min="1" value="30" required></div>
+            <div class="field"><label>Unit</label>
+              <select name="unit">
+                <option value="seconds">Seconds</option>
+                <option value="minutes" selected>Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+            <div class="field"><label>Price</label><input name="price" type="text" inputmode="decimal" placeholder="500" required></div>
+            <div class="field"><label>Keys in stock</label><input name="stock" type="number" min="0" value="10" required></div>
+          </div>
+          <div class="actions"><button class="btn" type="submit">CREATE PLAN</button></div>
+          <div class="msg-line" id="plan-msg"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Plans</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Duration</th><th>Price</th><th>Stock</th><th>Sold</th><th>Status</th><th>Restock</th><th>Actions</th></tr></thead>
+            <tbody id="plans-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-resellers">
+      <div class="panel">
+        <h2>Create reseller</h2>
+        <form id="res-form">
+          <div class="form-grid">
+            <div class="field"><label>Username</label><input name="username" type="text" required maxlength="40"></div>
+            <div class="field"><label>Password</label><input name="password" type="text" required minlength="6" maxlength="80"></div>
+            <div class="field"><label>First name</label><input name="first_name" type="text" required maxlength="60"></div>
+            <div class="field"><label>Surname</label><input name="last_name" type="text" required maxlength="60"></div>
+            <div class="field"><label>Age</label><input name="age" type="number" min="13" max="120"></div>
+            <div class="field"><label>Starting balance</label><input name="balance" type="text" inputmode="decimal" value="0"></div>
+            <div class="field wide"><label>Picture (JPG/PNG/WEBP, max 2MB)</label><input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          </div>
+          <div class="actions"><button class="btn" type="submit">CREATE RESELLER</button></div>
+          <div class="msg-line" id="res-msg"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Resellers</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pic</th><th>Username</th><th>Name</th><th>Age</th><th>Balance</th><th>Keys</th><th>Status</th><th>Balance / password</th><th>Actions</th></tr></thead>
+            <tbody id="resellers-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-requests">
+      <div class="panel">
+        <h2>Restock requests</h2>
+        <p class="hint">Resellers ask for more keys when a plan is sold out.</p>
+        <div class="actions"><button class="btn ghost" id="req-refresh" type="button">REFRESH</button></div>
+        <div class="table-wrap mt-12">
+          <table>
+            <thead><tr><th>Plan</th><th>Reseller</th><th>Note</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+            <tbody id="requests-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-bans">
+      <div class="panel">
+        <h2>Sheriff shield</h2>
+        <p class="hint">Automatically traps scanners, probe paths, attack payloads and floods. A caught request bans its IP and, when the client sends one, its device ID. Spared: local IPs and IPs holding an admin session.</p>
+        <form id="sentinel-form">
+          <label class="shield-check"><input type="checkbox" name="enabled"> Auto-ban attackers</label>
+          <div class="actions"><button class="btn" type="submit">SAVE SHIELD</button></div>
+          <div class="msg-line" id="sentinel-msg"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Ban an IP or device</h2>
+        <p class="hint">Banned IPs cannot open the site, activate a key or use a subscription, even with a valid key. A banned device ID is refused at activation and its Happ subscription stops.</p>
+        <form id="ban-form">
+          <div class="form-grid">
+            <div class="field"><label>IP address</label><input name="ip" type="text" placeholder="203.0.113.9"></div>
+            <div class="field"><label>Device ID / HWID</label><input name="hwid" type="text" placeholder="optional"></div>
+            <div class="field"><label>Reason</label><input name="reason" type="text" maxlength="120"></div>
+            <div class="field"><label>Duration (blank = permanent)</label><input name="amount" type="number" min="1"></div>
+            <div class="field"><label>Unit</label>
+              <select name="unit">
+                <option value="minutes">Minutes</option>
+                <option value="hours" selected>Hours</option>
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions"><button class="btn danger" type="submit">BAN</button></div>
+          <div class="msg-line" id="ban-msg"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Banned IPs</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>IP</th><th>Reason</th><th>Banned</th><th>Expires</th><th>Actions</th></tr></thead>
+            <tbody id="bans-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Banned devices</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Device ID</th><th>Reason</th><th>Banned</th><th>Expires</th><th>Actions</th></tr></thead>
+            <tbody id="hwid-bans-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-geo">
+      <div class="panel">
+        <h2>Country / state lock</h2>
+        <p class="hint">Before the activation page opens, the visitor IP is checked. Locked places see "State locked". Block mode locks the listed places; allow mode opens only the listed places.</p>
+        <form id="geo-mode-form">
+          <div class="form-grid">
+            <div class="field"><label>Mode</label>
+              <select name="mode">
+                <option value="block">Block listed places</option>
+                <option value="allow">Allow only listed places</option>
+              </select>
+            </div>
+            <div class="field wide"><label>Locked message</label><input name="note" type="text" maxlength="80" value="State locked"></div>
+            <div class="field"><label>If lookup fails</label>
+              <select name="fail_open">
+                <option value="1">Let visitors in</option>
+                <option value="0">Lock everyone out</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions"><button class="btn" type="submit">SAVE MODE</button></div>
+          <div class="msg-line" id="geo-mode-msg"></div>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>Add a locked place</h2>
+        <div class="form-grid">
+          <div class="field"><label>Country</label><select id="geo-country"><option value="">Loading…</option></select></div>
+          <div class="field wide"><label>State / region (blank = whole country)</label><select id="geo-state" disabled><option value="">Whole country</option></select></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="geo-lock" type="button">LOCK PLACE</button>
+          <span class="msg-line" id="geo-msg"></span>
+        </div>
+        <h3 class="mt-16">Locked places</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Country</th><th>State</th><th>Mode</th><th>Actions</th></tr></thead>
+            <tbody id="geo-rules"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>IP lookup</h2>
+        <div class="form-grid">
+          <div class="field wide"><label>IP address (blank = this admin IP)</label><input id="geo-ip" type="text"></div>
+          <div class="field"><label>&nbsp;</label><button class="btn ghost wide-btn" id="geo-lookup" type="button">CHECK IP</button></div>
+        </div>
+        <div class="msg-line" id="geo-lookup-msg"></div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-config">
+      <div class="panel">
+        <h2>Happ connection</h2>
+        <p class="hint">These values build the subscription that Happ imports. Fields set in hosting variables are locked. Public address: <span class="code" id="config-base"></span></p>
+        <form id="config-form">
+          <h3>Proxy server</h3>
+          <div class="form-grid">
+            <div class="field"><label>Protocol</label>
+              <select name="protocol">
+                <option value="vless">VLESS</option>
+                <option value="trojan">Trojan</option>
+                <option value="ss">Shadowsocks</option>
+              </select>
+            </div>
+            <div class="field"><label>Server host</label><input name="host" type="text" placeholder="server.example.com"></div>
+            <div class="field"><label>Port</label><input name="port" type="text" inputmode="numeric" placeholder="443"></div>
+            <div class="field"><label>SNI</label><input name="sni" type="text" placeholder="server.example.com"></div>
+            <div class="field wide"><label>VLESS UUID</label><input name="uuid" type="text" placeholder="UUID"></div>
+            <div class="field wide"><label>Password (trojan / shadowsocks)</label><input name="password" type="text" placeholder="password"></div>
+            <div class="field"><label>Network</label>
+              <select name="network">
+                <option value="ws">WebSocket</option>
+                <option value="tcp">TCP</option>
+                <option value="grpc">gRPC</option>
+              </select>
+            </div>
+            <div class="field"><label>Security</label>
+              <select name="security">
+                <option value="tls">TLS</option>
+                <option value="reality">Reality</option>
+                <option value="none">None</option>
+              </select>
+            </div>
+            <div class="field"><label>Path / service name</label><input name="path" type="text" placeholder="/"></div>
+            <div class="field"><label>Fingerprint</label><input name="fp" type="text" placeholder="chrome"></div>
+            <div class="field"><label>ALPN</label><input name="alpn" type="text" placeholder="h2,http/1.1"></div>
+            <div class="field"><label>Flow</label><input name="flow" type="text" placeholder="xtls-rprx-vision"></div>
+            <div class="field"><label>Reality public key</label><input name="pbk" type="text"></div>
+            <div class="field"><label>Reality short id</label><input name="sid" type="text"></div>
+            <div class="field"><label>Shadowsocks method</label><input name="ss_method" type="text" placeholder="aes-256-gcm"></div>
+            <div class="field"><label>Profile name</label><input name="remark" type="text" placeholder="DESTINY H4X"></div>
+          </div>
+          <div class="actions">
+            <label class="check"><input name="crypto_link" type="checkbox"> Encrypt subscription link (Happ crypto)</label>
+          </div>
+
+          <h3 class="mt-18">Site</h3>
+          <div class="form-grid">
+            <div class="field wide"><label>Public base URL</label><input name="public_base_url" type="text" placeholder="https://your-app.up.railway.app"></div>
+            <div class="field wide"><label>Buy / WhatsApp key link</label><input name="buy_url" type="text" placeholder="https://wa.me/..."></div>
+            <div class="field wide"><label>Support link</label><input name="support_url" type="text"></div>
+            <div class="field"><label>Currency</label><input name="currency" type="text" maxlength="6" placeholder="NGN"></div>
+            <div class="field wide"><label>Connection test target</label><input name="test_target" type="text" placeholder="https://cp.cloudflare.com/generate_204"></div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" type="submit">SAVE CONFIG</button>
+            <button class="btn ghost" id="cfg-test" type="button">RUN TEST</button>
+          </div>
+          <div class="msg-line" id="cfg-msg"></div>
+          <div class="out-box" id="cfg-out-wrap">
+            <textarea id="cfg-out" readonly></textarea>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="section" id="sec-sessions">
+      <div class="panel">
+        <h2>Sessions</h2>
+        <div class="actions"><button class="btn ghost" id="sess-refresh" type="button">REFRESH</button></div>
+        <div class="table-wrap mt-12">
+          <table>
+            <thead><tr><th>Label</th><th>Role</th><th>IP</th><th>Device</th><th>Started</th><th>Expires</th><th>Actions</th></tr></thead>
+            <tbody id="sessions-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sec-audit">
+      <div class="panel">
+        <h2>Audit log</h2>
+        <div class="actions"><button class="btn ghost" id="audit-refresh" type="button">REFRESH</button></div>
+        <div class="table-wrap mt-12">
+          <table>
+            <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Detail</th><th>IP</th></tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/admin.js') }}"></script>{% endblock %}
